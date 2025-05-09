@@ -285,182 +285,181 @@ fn benchmark_moves(c: &mut Criterion) {
 }
 
 fn benchmark_refs(c: &mut Criterion) {
-    let s = Small {
-        a: 1,
-        b: "Hello".to_string(),
-        c: 3.14,
-        d: vec![1, 2, 3],
-        e: HashMap::new(),
-        f: true,
-        g: Some(42),
-        h: vec!["Apple".to_string(), "Banana".to_string()],
-        i: 2.71,
-        j: HashMap::new(),
-    };
-
-    let m = Medium {
-        a: 0,
-        b: String::new(),
-        c: 0.0,
-        d: Vec::new(),
-        e: HashMap::new(),
-        f: 0,
-        g: Vec::new(),
-        h: String::new(),
-        i: HashMap::new(),
-        j: 0.0,
-        k: None,
-        l: Vec::new(),
-        m: false,
-        n: Vec::new(),
-        o: HashMap::new(),
-        p: String::new(),
-        q: None,
-        r: Vec::new(),
-        s: HashMap::new(),
-        t: 0.0,
-    };
-
-    let l = Large {
-        a: 0,
-        b: 0.0,
-        c: String::new(),
-        d: Vec::new(),
-        e: HashMap::new(),
-        f: None,
-        g: 0,
-        h: Vec::new(),
-        i: HashMap::new(),
-        j: 0.0,
-        k: 0,
-        l: Vec::new(),
-        m: String::new(),
-        n: HashMap::new(),
-        o: Vec::new(),
-        p: Vec::new(),
-        q: Vec::new(),
-        r: HashMap::new(),
-        s: Vec::new(),
-        t: None,
-        u: 0.0,
-        v: String::new(),
-        w: 0,
-        x: 0.0,
-        y: 0,
-        z: String::new(),
-        aa: Vec::new(),
-        ab: 0,
-        ac: HashMap::new(),
-        ad: None,
-        ae: Vec::new(),
-        af: HashMap::new(),
-    };
-
     c.bench_function("return_small_ref", |b| {
         b.iter(|| {
+            let s = Small {
+                a: 1,
+                b: "Hello".to_string(),
+                c: 3.14,
+                d: vec![1, 2, 3],
+                e: HashMap::new(),
+                f: true,
+                g: Some(42),
+                h: vec!["Apple".to_string(), "Banana".to_string()],
+                i: 2.71,
+                j: HashMap::new(),
+            };
+
             let _ = black_box(return_small_ref(&s));
         })
     });
 
     c.bench_function("return_medium_ref", |b| {
         b.iter(|| {
+            let m = Medium {
+                a: 0,
+                b: String::new(),
+                c: 0.0,
+                d: Vec::new(),
+                e: HashMap::new(),
+                f: 0,
+                g: Vec::new(),
+                h: String::new(),
+                i: HashMap::new(),
+                j: 0.0,
+                k: None,
+                l: Vec::new(),
+                m: false,
+                n: Vec::new(),
+                o: HashMap::new(),
+                p: String::new(),
+                q: None,
+                r: Vec::new(),
+                s: HashMap::new(),
+                t: 0.0,
+            };
             let _ = black_box(return_medium_ref(&m));
         })
     });
 
     c.bench_function("return_large_ref", |b| {
         b.iter(|| {
+            let l = Large {
+                a: 0,
+                b: 0.0,
+                c: String::new(),
+                d: Vec::new(),
+                e: HashMap::new(),
+                f: None,
+                g: 0,
+                h: Vec::new(),
+                i: HashMap::new(),
+                j: 0.0,
+                k: 0,
+                l: Vec::new(),
+                m: String::new(),
+                n: HashMap::new(),
+                o: Vec::new(),
+                p: Vec::new(),
+                q: Vec::new(),
+                r: HashMap::new(),
+                s: Vec::new(),
+                t: None,
+                u: 0.0,
+                v: String::new(),
+                w: 0,
+                x: 0.0,
+                y: 0,
+                z: String::new(),
+                aa: Vec::new(),
+                ab: 0,
+                ac: HashMap::new(),
+                ad: None,
+                ae: Vec::new(),
+                af: HashMap::new(),
+            };
+
             let _ = black_box(return_large_ref(&l));
         })
     });
 }
 
 fn benchmark_mut_refs(c: &mut Criterion) {
-    let mut s = Small {
-        a: 1,
-        b: "Hello".to_string(),
-        c: 3.14,
-        d: vec![1, 2, 3],
-        e: HashMap::new(),
-        f: true,
-        g: Some(42),
-        h: vec!["Apple".to_string(), "Banana".to_string()],
-        i: 2.71,
-        j: HashMap::new(),
-    };
-
-    let mut m = Medium {
-        a: 0,
-        b: String::new(),
-        c: 0.0,
-        d: Vec::new(),
-        e: HashMap::new(),
-        f: 0,
-        g: Vec::new(),
-        h: String::new(),
-        i: HashMap::new(),
-        j: 0.0,
-        k: None,
-        l: Vec::new(),
-        m: false,
-        n: Vec::new(),
-        o: HashMap::new(),
-        p: String::new(),
-        q: None,
-        r: Vec::new(),
-        s: HashMap::new(),
-        t: 0.0,
-    };
-
-    let mut l = Large {
-        a: 0,
-        b: 0.0,
-        c: String::new(),
-        d: Vec::new(),
-        e: HashMap::new(),
-        f: None,
-        g: 0,
-        h: Vec::new(),
-        i: HashMap::new(),
-        j: 0.0,
-        k: 0,
-        l: Vec::new(),
-        m: String::new(),
-        n: HashMap::new(),
-        o: Vec::new(),
-        p: Vec::new(),
-        q: Vec::new(),
-        r: HashMap::new(),
-        s: Vec::new(),
-        t: None,
-        u: 0.0,
-        v: String::new(),
-        w: 0,
-        x: 0.0,
-        y: 0,
-        z: String::new(),
-        aa: Vec::new(),
-        ab: 0,
-        ac: HashMap::new(),
-        ad: None,
-        ae: Vec::new(),
-        af: HashMap::new(),
-    };
-
     c.bench_function("return_small_mut_ref", |b| {
         b.iter(|| {
+            let mut s = Small {
+                a: 1,
+                b: "Hello".to_string(),
+                c: 3.14,
+                d: vec![1, 2, 3],
+                e: HashMap::new(),
+                f: true,
+                g: Some(42),
+                h: vec!["Apple".to_string(), "Banana".to_string()],
+                i: 2.71,
+                j: HashMap::new(),
+            };
+
             let _ = black_box(return_small_mut_ref(&mut s));
         })
     });
 
     c.bench_function("return_medium_mut_ref", |b| {
         b.iter(|| {
+            let mut m = Medium {
+                a: 0,
+                b: String::new(),
+                c: 0.0,
+                d: Vec::new(),
+                e: HashMap::new(),
+                f: 0,
+                g: Vec::new(),
+                h: String::new(),
+                i: HashMap::new(),
+                j: 0.0,
+                k: None,
+                l: Vec::new(),
+                m: false,
+                n: Vec::new(),
+                o: HashMap::new(),
+                p: String::new(),
+                q: None,
+                r: Vec::new(),
+                s: HashMap::new(),
+                t: 0.0,
+            };
+
             let _ = black_box(return_medium_mut_ref(&mut m));
         })
     });
 
     c.bench_function("return_large_mut_ref", |b| {
         b.iter(|| {
+            let mut l = Large {
+                a: 0,
+                b: 0.0,
+                c: String::new(),
+                d: Vec::new(),
+                e: HashMap::new(),
+                f: None,
+                g: 0,
+                h: Vec::new(),
+                i: HashMap::new(),
+                j: 0.0,
+                k: 0,
+                l: Vec::new(),
+                m: String::new(),
+                n: HashMap::new(),
+                o: Vec::new(),
+                p: Vec::new(),
+                q: Vec::new(),
+                r: HashMap::new(),
+                s: Vec::new(),
+                t: None,
+                u: 0.0,
+                v: String::new(),
+                w: 0,
+                x: 0.0,
+                y: 0,
+                z: String::new(),
+                aa: Vec::new(),
+                ab: 0,
+                ac: HashMap::new(),
+                ad: None,
+                ae: Vec::new(),
+                af: HashMap::new(),
+            };
+
             let _ = black_box(return_large_mut_ref(&mut l));
         })
     });
