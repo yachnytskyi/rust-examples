@@ -9,6 +9,6 @@ edition = "2024"
 criterion = "0.5.1"
 
 [[bench]]
-name = "clone_move_reference"
+name = "move_reference"
 harness = false
 
