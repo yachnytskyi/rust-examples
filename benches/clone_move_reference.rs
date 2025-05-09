@@ -152,29 +152,17 @@ fn return_large_move() -> Large {
     }
 }
 
-fn return_small_ref<'a>(val: &'a Small) -> &'a Small {
-    val
-}
+fn return_small_ref<'a>(val: &'a Small) {}
 
-fn return_medium_ref<'a>(val: &'a Medium) -> &'a Medium {
-    val
-}
+fn return_medium_ref<'a>(val: &'a Medium) {}
 
-fn return_large_ref<'a>(val: &'a Large) -> &'a Large {
-    val
-}
+fn return_large_ref<'a>(val: &'a Large) {}
 
-fn return_small_mut_ref<'a>(val: &'a mut Small) -> &'a mut Small {
-    val
-}
+fn return_small_mut_ref<'a>(val: &'a mut Small) {}
 
-fn return_medium_mut_ref<'a>(val: &'a mut Medium) -> &'a mut Medium {
-    val
-}
+fn return_medium_mut_ref<'a>(val: &'a mut Medium) {}
 
-fn return_large_mut_ref<'a>(val: &'a mut Large) -> &'a mut Large {
-    val
-}
+fn return_large_mut_ref<'a>(val: &'a mut Large) {}
 
 fn return_small_clone() -> Small {
     Small {
@@ -477,7 +465,6 @@ fn benchmark_mut_refs(c: &mut Criterion) {
         })
     });
 }
-
 
 criterion_group!(
     benches,
