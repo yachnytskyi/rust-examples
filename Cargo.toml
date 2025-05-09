@@ -9,6 +9,6 @@ edition = "2024"
 criterion = "0.5.1"
 
 [[bench]]
-name = "move_vs_ref"
+name = "constructor"
 harness = false
 
