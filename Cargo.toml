@@ -9,6 +9,6 @@ edition = "2024"
 criterion = "0.5.1"
 
 [[bench]]
-name = "constructor"
+name = "clone_move_reference"
 harness = false
 
