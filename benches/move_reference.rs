@@ -157,6 +157,19 @@ impl Repository {
         }
     }
 
+    // Return move to structures
+    fn get_small(&self) -> Small {
+        self.small.clone()
+    }
+
+    fn get_medium(&self) -> Medium {
+        self.medium.clone()
+    }
+
+    fn get_large(&self) -> Large {
+        self.large.clone()
+    }
+
     // Return references to structures
     fn get_ref_small(&self) -> &Small {
         &self.small
@@ -194,12 +207,24 @@ impl<'a> UseCase<'a> {
         UseCase { repository }
     }
 
-    fn get_ref_small(&self) -> &Small {
-        self.repository.get_ref_small()
+    fn get_small(&self) -> Small {
+        self.repository.get_small()
+    }
+
+    fn get_medium(&self) -> Medium {
+        self.repository.get_medium()
+    }
+
+    fn get_large(&self) -> Large {
+        self.repository.get_large()
     }
 
     fn get_ref_medium(&self) -> &Medium {
         self.repository.get_ref_medium()
+    }
+
+    fn get_ref_small(&self) -> &Small {
+        self.repository.get_ref_small()
     }
 
     fn get_ref_large(&self) -> &Large {
@@ -227,6 +252,18 @@ struct Controller<'a> {
 impl<'a> Controller<'a> {
     fn new(use_case: &'a mut UseCase<'a>) -> Self {
         Controller { use_case }
+    }
+
+    fn get_small(&self) -> Small {
+        self.use_case.get_small()
+    }
+
+    fn get_medium(&self) -> Medium {
+        self.use_case.get_medium()
+    }
+
+    fn get_large(&self) -> Large {
+        self.use_case.get_large()
     }
 
     fn get_ref_small(&self) -> &Small {
@@ -258,7 +295,7 @@ impl<'a> Controller<'a> {
 fn benchmark_three_layer_ref_small(c: &mut Criterion) {
     let mut repository = Repository::new();
     let mut use_case = UseCase::new(&mut repository);
-    let mut controller = Controller::new(&mut use_case);
+    let controller = Controller::new(&mut use_case);
 
     c.bench_function("controller_to_use_case_to_repo_ref_small", |b| {
         b.iter(|| {
@@ -270,7 +307,7 @@ fn benchmark_three_layer_ref_small(c: &mut Criterion) {
 fn benchmark_three_layer_ref_medium(c: &mut Criterion) {
     let mut repository = Repository::new();
     let mut use_case = UseCase::new(&mut repository);
-    let mut controller = Controller::new(&mut use_case);
+    let controller = Controller::new(&mut use_case);
 
     c.bench_function("controller_to_use_case_to_repo_ref_medium", |b| {
         b.iter(|| {
@@ -282,7 +319,7 @@ fn benchmark_three_layer_ref_medium(c: &mut Criterion) {
 fn benchmark_three_layer_ref_large(c: &mut Criterion) {
     let mut repository = Repository::new();
     let mut use_case = UseCase::new(&mut repository);
-    let mut controller = Controller::new(&mut use_case);
+    let controller = Controller::new(&mut use_case);
 
     c.bench_function("controller_to_use_case_to_repo_ref_large", |b| {
         b.iter(|| {
@@ -330,11 +367,11 @@ fn benchmark_three_layer_mut_ref_large(c: &mut Criterion) {
 fn benchmark_three_layer_move_small(c: &mut Criterion) {
     let mut repository = Repository::new();
     let mut use_case = UseCase::new(&mut repository);
-    let mut controller = Controller::new(&mut use_case);
+    let controller = Controller::new(&mut use_case);
 
     c.bench_function("controller_to_use_case_to_repo_move_small", |b| {
         b.iter(|| {
-            let moved_data = controller.get_ref_small().clone(); // Move the owned data
+            let moved_data = controller.get_small();
             black_box(moved_data);
         })
     });
@@ -343,11 +380,11 @@ fn benchmark_three_layer_move_small(c: &mut Criterion) {
 fn benchmark_three_layer_move_medium(c: &mut Criterion) {
     let mut repository = Repository::new();
     let mut use_case = UseCase::new(&mut repository);
-    let mut controller = Controller::new(&mut use_case);
+    let controller = Controller::new(&mut use_case);
 
     c.bench_function("controller_to_use_case_to_repo_move_medium", |b| {
         b.iter(|| {
-            let moved_data = controller.get_ref_medium().clone(); // Move the owned data
+            let moved_data = controller.get_medium();
             black_box(moved_data);
         })
     });
@@ -356,11 +393,11 @@ fn benchmark_three_layer_move_medium(c: &mut Criterion) {
 fn benchmark_three_layer_move_large(c: &mut Criterion) {
     let mut repository = Repository::new();
     let mut use_case = UseCase::new(&mut repository);
-    let mut controller = Controller::new(&mut use_case);
+    let controller = Controller::new(&mut use_case);
 
     c.bench_function("controller_to_use_case_to_repo_move_large", |b| {
         b.iter(|| {
-            let moved_data = controller.get_ref_large().clone(); // Move the owned data
+            let moved_data = controller.get_large();
             black_box(moved_data);
         })
     });
@@ -375,8 +412,8 @@ criterion_group!(
     benchmark_three_layer_mut_ref_medium,
     benchmark_three_layer_mut_ref_large,
     benchmark_three_layer_move_small,
-    benchmark_three_layer_move_medium,    
-    benchmark_three_layer_move_large 
+    benchmark_three_layer_move_medium,
+    benchmark_three_layer_move_large
 );
 
 criterion_main!(benches);
