@@ -327,8 +327,6 @@ fn benchmark_three_layer_mut_ref_large(c: &mut Criterion) {
     });
 }
 
-// New Move Benchmark Functions
-
 fn benchmark_three_layer_move_small(c: &mut Criterion) {
     let mut repository = Repository::new();
     let mut use_case = UseCase::new(&mut repository);
