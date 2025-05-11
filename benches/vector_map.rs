@@ -1,6 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use rand::prelude::*;
-use std::collections::HashMap;
+use std::collections::{HashMap, BTreeMap};
 
 fn bench_vec_and_map_search(c: &mut Criterion) {
     // Sizes to test
@@ -12,8 +12,11 @@ fn bench_vec_and_map_search(c: &mut Criterion) {
 
         let vec: Vec<u32> = (0..size).map(|_| rng.random_range(0..size as u32)).collect();
         let mut map: HashMap<u32, ()> = HashMap::with_capacity(size);
+        let mut btree_map: BTreeMap<u32, ()> = BTreeMap::new();
+
         for &v in &vec {
             map.insert(v, ());
+            btree_map.insert(v, ());
         }
 
         // Make a sorted clone for pre-sorted binary search
@@ -23,19 +26,27 @@ fn bench_vec_and_map_search(c: &mut Criterion) {
         // Value to search for — a number not present (for worst case)
         let search_value = size as u32 + 1;
 
-        // Benchmark: linear search in Vec
-        let vec_bench_id = format!("vec_linear_search_{} elements", size);
-        c.bench_function(&vec_bench_id, |b| {
-            b.iter(|| {
-                black_box(vec.iter().find(|&&x| x == search_value));
-            })
-        });
+        // // Benchmark: linear search in Vec
+        // let vec_bench_id = format!("vec_linear_search_{} elements", size);
+        // c.bench_function(&vec_bench_id, |b| {
+        //     b.iter(|| {
+        //         black_box(vec.iter().find(|&&x| x == search_value));
+        //     })
+        // });
 
         // Benchmark: HashMap lookup
         let map_bench_id = format!("map_search_{} elements", size);
         c.bench_function(&map_bench_id, |b| {
             b.iter(|| {
                 black_box(map.get(&search_value));
+            })
+        });
+
+        // Benchmark: BTreeMap lookup
+        let btree_map_bench_id = format!("btree_map_search_{} elements", size);
+        c.bench_function(&btree_map_bench_id, |b| {
+            b.iter(|| {
+                black_box(btree_map.get(&search_value));
             })
         });
 
