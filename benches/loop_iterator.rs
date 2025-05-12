@@ -12,15 +12,6 @@ fn basic_for_loop(n: u64) -> u64 {
 }
 
 #[inline(never)]
-fn iterator_for_loop(n: u64) -> u64 {
-    let mut sum = 0;
-    for i in 0..n {
-        sum += i;
-    }
-    sum
-}
-
-#[inline(never)]
 fn map_for_loop(n: u64) -> u64 {
     let mut sum = 0;
     for i in (0..n).map(|x| x) {
@@ -102,17 +93,64 @@ fn all_for_loop(n: u64) -> bool {
     (0..n).all(|x| x < n)
 }
 
+// ==== Manual loop versions without syntax sugar ====
+#[inline(never)]
+fn zip_without_sugar(n: u64) -> u64 {
+    let v: Vec<u64> = (0..n).collect(); // Same prebuilt Vec
+    let mut sum = 0;
+    let mut i = 0;
+
+    while i < n {
+        let a = i;
+        let b = v[i as usize];
+        sum += a + b;
+        i += 1;
+    }
+
+    sum
+}
+
+#[inline(never)]
+fn flat_map_without_sugar(n: u64) -> u64 {
+    let mut sum = 0;
+    for i in 0..n {
+        sum += i; // First element in the pair
+        sum += i + 1; // Second element in the pair
+    }
+    sum
+}
+
+#[inline(never)]
+fn map_without_sugar(n: u64) -> u64 {
+    let mut sum = 0;
+    for i in 0..n {
+        let x = i; // Apply transformation (same as `map(|x| x)`)
+        sum += x;
+    }
+    sum
+}
+
+#[inline(never)]
+fn iterator_map_collect_without_sugar(n: u64) -> u64 {
+    let mut sum = 0;
+    let mut vec = Vec::with_capacity(n as usize); // Pre-allocate the vector
+    for i in 0..n {
+        vec.push(i); // Collect the values manually into the vector
+    }
+    for val in vec.iter() {
+        sum += val; // Sum the collected values
+    }
+    sum
+}
+
 // ==== Benchmark group ====
 
 fn bench_for_loops(c: &mut Criterion) {
     let n = 1_000_000;
 
+    // Basic loop benchmarks
     c.bench_function("basic_for_loop", |b| {
         b.iter(|| black_box(basic_for_loop(n)))
-    });
-
-    c.bench_function("iterator_for_loop", |b| {
-        b.iter(|| black_box(iterator_for_loop(n)))
     });
 
     c.bench_function("map_for_loop", |b| b.iter(|| black_box(map_for_loop(n))));
@@ -127,8 +165,7 @@ fn bench_for_loops(c: &mut Criterion) {
         b.iter(|| black_box(for_each_for_loop(n)))
     });
 
-    // Additional benchmark functions
-
+    // Additional benchmark functions with syntax sugar
     c.bench_function("filter_for_loop", |b| {
         b.iter(|| black_box(filter_for_loop(n)))
     });
@@ -146,6 +183,22 @@ fn bench_for_loops(c: &mut Criterion) {
     c.bench_function("any_for_loop", |b| b.iter(|| black_box(any_for_loop(n))));
 
     c.bench_function("all_for_loop", |b| b.iter(|| black_box(all_for_loop(n))));
+
+    c.bench_function("zip_without_sugar", |b| {
+        b.iter(|| black_box(zip_without_sugar(n)))
+    });
+
+    c.bench_function("flat_map_without_sugar", |b| {
+        b.iter(|| black_box(flat_map_without_sugar(n)))
+    });
+
+    c.bench_function("map_without_sugar", |b| {
+        b.iter(|| black_box(map_without_sugar(n)))
+    });
+
+    c.bench_function("iterator_map_collect_without_sugar", |b| {
+        b.iter(|| black_box(iterator_map_collect_without_sugar(n)))
+    });
 }
 
 criterion_group!(benches, bench_for_loops);
