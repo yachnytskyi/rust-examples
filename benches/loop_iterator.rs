@@ -46,6 +46,62 @@ fn for_each_for_loop(n: u64) -> u64 {
     sum
 }
 
+#[inline(never)]
+fn filter_for_loop(n: u64) -> u64 {
+    let mut sum = 0;
+    for i in (0..n).filter(|&x| x % 2 == 0) {
+        sum += i;
+    }
+    sum
+}
+
+#[inline(never)]
+fn zip_for_loop(n: u64) -> u64 {
+    let v: Vec<u64> = (0..n).collect();
+    let mut sum = 0;
+    for (a, b) in (0..n).zip(v.iter()) {
+        sum += a + *b;
+    }
+    sum
+}
+
+#[inline(never)]
+fn skip_for_loop(n: u64) -> u64 {
+    let mut sum = 0;
+    for i in (0..n).skip(10) {
+        sum += i;
+    }
+    sum
+}
+
+#[inline(never)]
+fn take_for_loop(n: u64) -> u64 {
+    let mut sum = 0;
+    for i in (0..n).take(1000) {
+        sum += i;
+    }
+    sum
+}
+
+#[inline(never)]
+fn flat_map_for_loop(n: u64) -> u64 {
+    let mut sum = 0;
+    for i in (0..n).flat_map(|x| vec![x, x + 1]) {
+        sum += i;
+    }
+    sum
+}
+
+#[inline(never)]
+fn any_for_loop(n: u64) -> bool {
+    (0..n).any(|x| x == 100)
+}
+
+#[inline(never)]
+fn all_for_loop(n: u64) -> bool {
+    (0..n).all(|x| x < n)
+}
+
 // ==== Benchmark group ====
 
 fn bench_for_loops(c: &mut Criterion) {
@@ -70,6 +126,26 @@ fn bench_for_loops(c: &mut Criterion) {
     c.bench_function("for_each_for_loop", |b| {
         b.iter(|| black_box(for_each_for_loop(n)))
     });
+
+    // Additional benchmark functions
+
+    c.bench_function("filter_for_loop", |b| {
+        b.iter(|| black_box(filter_for_loop(n)))
+    });
+
+    c.bench_function("zip_for_loop", |b| b.iter(|| black_box(zip_for_loop(n))));
+
+    c.bench_function("skip_for_loop", |b| b.iter(|| black_box(skip_for_loop(n))));
+
+    c.bench_function("take_for_loop", |b| b.iter(|| black_box(take_for_loop(n))));
+
+    c.bench_function("flat_map_for_loop", |b| {
+        b.iter(|| black_box(flat_map_for_loop(n)))
+    });
+
+    c.bench_function("any_for_loop", |b| b.iter(|| black_box(any_for_loop(n))));
+
+    c.bench_function("all_for_loop", |b| b.iter(|| black_box(all_for_loop(n))));
 }
 
 criterion_group!(benches, bench_for_loops);
