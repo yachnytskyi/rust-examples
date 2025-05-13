@@ -75,6 +75,7 @@ struct Large {
     af: HashMap<i64, f64>,
 }
 
+// Reference functions
 fn pass_by_reference_small(small: &Small) {
     black_box(small);
 }
@@ -87,6 +88,7 @@ fn pass_by_reference_large(large: &Large) {
     black_box(large);
 }
 
+// Mutable reference functions
 fn pass_by_mutable_reference_small(small: &mut Small) {
     small.a += 1;
 }
@@ -99,6 +101,7 @@ fn pass_by_mutable_reference_large(large: &mut Large) {
     large.a += 1;
 }
 
+// Move functions
 fn move_small(small: Small) -> Small {
     small
 }
@@ -111,8 +114,22 @@ fn move_large(large: Large) -> Large {
     large
 }
 
+// Clone functions
+fn clone_small(small: &Small) -> Small {
+    small.clone()
+}
+
+fn clone_medium(medium: &Medium) -> Medium {
+    medium.clone()
+}
+
+fn clone_large(large: &Large) -> Large {
+    large.clone()
+}
+
+// Benchmark suite
 fn benchmark(c: &mut Criterion) {
-    // Benchmarking for Small structure
+    // Small
     c.bench_function("pass_by_reference_small", |b| {
         b.iter(|| {
             let small = Small {
@@ -167,7 +184,25 @@ fn benchmark(c: &mut Criterion) {
         })
     });
 
-    // Benchmarking for Medium structure
+    c.bench_function("clone_small", |b| {
+        b.iter(|| {
+            let small = Small {
+                a: 1,
+                b: String::from("small"),
+                c: 1.0,
+                d: vec![1, 2, 3],
+                e: HashMap::new(),
+                f: true,
+                g: Some(1),
+                h: vec![String::from("h1")],
+                i: 1.0,
+                j: HashMap::new(),
+            };
+            clone_small(&small)
+        })
+    });
+
+    // Medium
     c.bench_function("pass_by_reference_medium", |b| {
         b.iter(|| {
             let medium = Medium {
@@ -252,7 +287,35 @@ fn benchmark(c: &mut Criterion) {
         })
     });
 
-    // Benchmarking for Large structure
+    c.bench_function("clone_medium", |b| {
+        b.iter(|| {
+            let medium = Medium {
+                a: 1,
+                b: String::from("medium"),
+                c: 2.0,
+                d: vec![1, 2, 3],
+                e: HashMap::new(),
+                f: 1,
+                g: vec![1],
+                h: String::from("h2"),
+                i: HashMap::new(),
+                j: 2.0,
+                k: Some(1),
+                l: vec![1.0],
+                m: true,
+                n: vec![String::from("n1")],
+                o: HashMap::new(),
+                p: String::from("p"),
+                q: None,
+                r: vec![1],
+                s: HashMap::new(),
+                t: 3.0,
+            };
+            clone_medium(&medium)
+        })
+    });
+
+    // Large
     c.bench_function("pass_by_reference_large", |b| {
         b.iter(|| {
             let large = Large {
@@ -370,6 +433,46 @@ fn benchmark(c: &mut Criterion) {
                 af: HashMap::new(),
             };
             move_large(large)
+        })
+    });
+
+    c.bench_function("clone_large", |b| {
+        b.iter(|| {
+            let large = Large {
+                a: 1,
+                b: 1.0,
+                c: String::from("large"),
+                d: vec![1, 2, 3],
+                e: HashMap::new(),
+                f: None,
+                g: 2,
+                h: vec![1],
+                i: HashMap::new(),
+                j: 2.0,
+                k: 1,
+                l: vec![1.0],
+                m: String::from("m"),
+                n: HashMap::new(),
+                o: vec![String::from("o1")],
+                p: vec![1],
+                q: vec![1],
+                r: HashMap::new(),
+                s: vec![1],
+                t: Some(vec![1]),
+                u: 2.0,
+                v: String::from("v"),
+                w: 3,
+                x: 4.0,
+                y: 5,
+                z: String::from("z"),
+                aa: vec![1.0],
+                ab: 6,
+                ac: HashMap::new(),
+                ad: None,
+                ae: vec![String::from("ae1")],
+                af: HashMap::new(),
+            };
+            clone_large(&large)
         })
     });
 }
