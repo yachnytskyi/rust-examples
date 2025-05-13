@@ -1,6 +1,7 @@
 use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use std::collections::HashMap;
 
+// Define the structures
 #[derive(Clone)]
 struct Small {
     a: i32,
