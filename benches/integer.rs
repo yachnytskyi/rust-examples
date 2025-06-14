@@ -8,7 +8,8 @@ fn takes_i128_by_move(value: i128) -> i128 {
 
 // Function that takes i128 by reference (borrow)
 fn takes_i128_by_ref(value: &i128) -> i128 {
-    black_box(*value + 3)
+    println!("{}", value);
+    v
 }
 
 fn benchmark_i128_functions(c: &mut Criterion) {
