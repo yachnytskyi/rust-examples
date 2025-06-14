@@ -8,8 +8,18 @@ fn takes_i128_by_move(value: i128) -> i128 {
 
 // Function that takes i128 by reference (borrow)
 fn takes_i128_by_ref(value: &i128) -> i128 {
-    println!("{}", value);
-    v
+    black_box(value + 1) * value
+}
+
+// Function that takes i128 by reference (borrow)
+fn takes_and_returns_i128_by_ref(value: &i128) -> &i128 {
+    black_box(value + 1);
+    value
+}
+
+// Function that takes i128 by reference (borrow)
+fn takes_without_returning_i128_by_ref(value: &i128) {
+    black_box(value + 1);
 }
 
 fn benchmark_i128_functions(c: &mut Criterion) {
@@ -25,6 +35,20 @@ fn benchmark_i128_functions(c: &mut Criterion) {
     c.bench_function("takes_i128_by_ref", |b| {
         b.iter(|| {
             let result = takes_i128_by_ref(black_box(&value));
+            black_box(result);
+        })
+    });
+
+    c.bench_function("takes_and_returns_i128_by_ref", |b| {
+        b.iter(|| {
+            let result = takes_and_returns_i128_by_ref(black_box(&value));
+            black_box(result);
+        })
+    });
+
+    c.bench_function("takes_without_returning_i128_by_ref", |b| {
+        b.iter(|| {
+            let result = takes_without_returning_i128_by_ref(black_box(&value));
             black_box(result);
         })
     });
