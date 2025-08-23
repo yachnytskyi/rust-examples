@@ -183,6 +183,7 @@ fn bench_return_forms_for<const N: usize>(c: &mut Criterion) {
 
 fn benches(c: &mut Criterion) {
     bench_return_forms_for::<10>(c);
+        bench_return_forms_for::<30>(c);
     bench_return_forms_for::<100>(c);
     bench_return_forms_for::<1_000>(c);
     bench_return_forms_for::<10_000>(c);
