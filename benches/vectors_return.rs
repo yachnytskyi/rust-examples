@@ -186,6 +186,8 @@ fn benches(c: &mut Criterion) {
     bench_return_forms_for::<100>(c);
     bench_return_forms_for::<1_000>(c);
     bench_return_forms_for::<10_000>(c);
+    bench_return_forms_for::<10_0000>(c);
+
     bench_return_forms_for::<1_000_000>(c);
 }
 
