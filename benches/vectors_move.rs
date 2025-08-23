@@ -1,230 +1,336 @@
-use criterion::{Criterion, black_box, criterion_group, criterion_main};
+use criterion::{BatchSize, Criterion, Throughput, black_box, criterion_group, criterion_main};
 use smallvec::{Array, SmallVec};
 use tinyvec::TinyVec;
 
-// ---------- Builders (generic over N) ----------
-fn make_vec_n<const N: usize>() -> Vec<u32> {
-    let mut v = Vec::with_capacity(N);
-    for i in 0..N as u32 {
-        v.push(i);
-    }
-    v
-}
+// ------------------------------------------------------------
+// Common types & helpers
+// ------------------------------------------------------------
 
-// SmallVec inline cap = 128. For N <= 128 this stays inline; for N > 128 this allocates once.
 type SmallInline = [u32; 128];
-fn make_smallvec_n<const N: usize>() -> SmallVec<SmallInline> {
-    // smallvec 1.15: Array::size() gives inline capacity
-    let inline_cap = <SmallInline as Array>::size();
+const TINY_INLINE: usize = 100;
 
-    let mut v: SmallVec<SmallInline> = if N > inline_cap {
-        SmallVec::with_capacity(N)
-    } else {
-        SmallVec::new()
-    };
-
+#[inline(never)]
+fn fill_vec<const N: usize>(v: &mut Vec<u32>) {
+    v.clear(); // keep capacity (no alloc)
     for i in 0..N as u32 {
-        v.push(i);
+        v.push(black_box(i));
     }
-    v
 }
 
-// TinyVec inline cap = 100. Same idea.
-fn make_tinyvec_n<const N: usize>() -> TinyVec<[u32; 100]> {
-    let mut v: TinyVec<[u32; 100]> = if N > 100 {
-        TinyVec::with_capacity(N)
-    } else {
-        TinyVec::new()
-    };
+#[inline(never)]
+fn fill_smallvec<const N: usize>(v: &mut SmallVec<SmallInline>) {
+    v.clear(); // keep mode & capacity
     for i in 0..N as u32 {
-        v.push(i);
-    }
-    v
-}
-
-// ---------- Repo → UseCase (return by move) ----------
-pub trait Repo<T> {
-    fn fetch(&self) -> T;
-}
-
-pub struct VecRepo<const N: usize>;
-pub struct SmallVecRepo<const N: usize>;
-pub struct TinyVecRepo<const N: usize>;
-
-impl<const N: usize> Repo<Vec<u32>> for VecRepo<N> {
-    fn fetch(&self) -> Vec<u32> {
-        make_vec_n::<N>()
-    }
-}
-impl<const N: usize> Repo<SmallVec<SmallInline>> for SmallVecRepo<N> {
-    fn fetch(&self) -> SmallVec<SmallInline> {
-        make_smallvec_n::<N>()
-    }
-}
-impl<const N: usize> Repo<TinyVec<[u32; 100]>> for TinyVecRepo<N> {
-    fn fetch(&self) -> TinyVec<[u32; 100]> {
-        make_tinyvec_n::<N>()
+        v.push(black_box(i));
     }
 }
 
-pub struct UseCase<R> {
-    repo: R,
-}
-impl<R> UseCase<R> {
-    pub fn new(repo: R) -> Self {
-        Self { repo }
+#[inline(never)]
+fn fill_tinyvec<const N: usize>(v: &mut TinyVec<[u32; TINY_INLINE]>) {
+    v.clear(); // keep mode & capacity
+    for i in 0..N as u32 {
+        v.push(black_box(i));
     }
 }
 
-impl<const N: usize> UseCase<VecRepo<N>> {
-    pub fn run_vec(&self) -> Vec<u32> {
-        self.repo.fetch()
-    }
+// ------------------------------------------------------------
+// Owned-move, zero-alloc per iteration (Vec / SmallVec / TinyVec)
+// Repos keep two preallocated buffers and use a swap+recycle scheme.
+// ------------------------------------------------------------
+
+struct VecRepoMove<const N: usize> {
+    buf: Vec<u32>,
+    spare: Vec<u32>,
 }
-impl<const N: usize> UseCase<SmallVecRepo<N>> {
-    pub fn run_smallvec(&self) -> SmallVec<SmallInline> {
-        self.repo.fetch()
+impl<const N: usize> VecRepoMove<N> {
+    fn new() -> Self {
+        Self {
+            buf: Vec::with_capacity(N),
+            spare: Vec::with_capacity(N),
+        }
     }
-}
-impl<const N: usize> UseCase<TinyVecRepo<N>> {
-    pub fn run_tinyvec(&self) -> TinyVec<[u32; 100]> {
-        self.repo.fetch()
+    #[inline(never)]
+    fn fetch_move(&mut self) -> Vec<u32> {
+        fill_vec::<N>(&mut self.buf);
+        // Move filled buffer out without losing a preallocated one:
+        core::mem::swap(&mut self.buf, &mut self.spare);
+        core::mem::take(&mut self.spare) // filled Vec (cap N); spare becomes empty (cap 0) until recycle
+    }
+    #[inline(never)]
+    fn recycle(&mut self, mut v: Vec<u32>) {
+        v.clear();
+        self.spare = v; // return capacity to repo
     }
 }
 
-// ---------- Repo → UseCase (return Box<[u32]> by move) ----------
-pub trait RepoBox {
-    fn fetch_box(&self) -> Box<[u32]>;
+struct SmallVecRepoMove<const N: usize> {
+    buf: SmallVec<SmallInline>,
+    spare: SmallVec<SmallInline>,
 }
-
-pub struct VecRepoBox<const N: usize>;
-pub struct SmallVecRepoBox<const N: usize>;
-pub struct TinyVecRepoBox<const N: usize>;
-
-impl<const N: usize> RepoBox for VecRepoBox<N> {
-    fn fetch_box(&self) -> Box<[u32]> {
-        // Vec preallocated exactly: reuses buffer, no extra alloc/copy
-        make_vec_n::<N>().into_boxed_slice()
+impl<const N: usize> SmallVecRepoMove<N> {
+    fn new() -> Self {
+        let inline = <SmallInline as Array>::size();
+        let (buf, spare) = if N > inline {
+            (SmallVec::with_capacity(N), SmallVec::with_capacity(N))
+        } else {
+            (SmallVec::new(), SmallVec::new()) // inline; zero alloc path
+        };
+        Self { buf, spare }
     }
-}
-impl<const N: usize> RepoBox for SmallVecRepoBox<N> {
-    fn fetch_box(&self) -> Box<[u32]> {
-        // If inline, this allocates + memcpy; if already heap, buffer is reused.
-        make_smallvec_n::<N>().into_vec().into_boxed_slice()
+    #[inline(never)]
+    fn fetch_move(&mut self) -> SmallVec<SmallInline> {
+        fill_smallvec::<N>(&mut self.buf);
+        core::mem::swap(&mut self.buf, &mut self.spare);
+        core::mem::take(&mut self.spare)
     }
-}
-impl<const N: usize> RepoBox for TinyVecRepoBox<N> {
-    fn fetch_box(&self) -> Box<[u32]> {
-        make_tinyvec_n::<N>().into_vec().into_boxed_slice()
-    }
-}
-
-pub struct UseCaseBox<R: RepoBox> {
-    repo: R,
-}
-impl<R: RepoBox> UseCaseBox<R> {
-    pub fn new(repo: R) -> Self {
-        Self { repo }
-    }
-}
-impl<const N: usize> UseCaseBox<VecRepoBox<N>> {
-    pub fn run_box(&self) -> Box<[u32]> {
-        self.repo.fetch_box()
-    }
-}
-impl<const N: usize> UseCaseBox<SmallVecRepoBox<N>> {
-    pub fn run_box(&self) -> Box<[u32]> {
-        self.repo.fetch_box()
-    }
-}
-impl<const N: usize> UseCaseBox<TinyVecRepoBox<N>> {
-    pub fn run_box(&self) -> Box<[u32]> {
-        self.repo.fetch_box()
+    #[inline(never)]
+    fn recycle(&mut self, mut v: SmallVec<SmallInline>) {
+        v.clear();
+        self.spare = v;
     }
 }
 
-// ---------- Bench helpers ----------
+struct TinyVecRepoMove<const N: usize> {
+    buf: TinyVec<[u32; TINY_INLINE]>,
+    spare: TinyVec<[u32; TINY_INLINE]>,
+}
+impl<const N: usize> TinyVecRepoMove<N> {
+    fn new() -> Self {
+        let (buf, spare) = if N > TINY_INLINE {
+            (
+                TinyVec::<[u32; TINY_INLINE]>::with_capacity(N),
+                TinyVec::<[u32; TINY_INLINE]>::with_capacity(N),
+            )
+        } else {
+            (TinyVec::new(), TinyVec::new())
+        };
+        Self { buf, spare }
+    }
+    #[inline(never)]
+    fn fetch_move(&mut self) -> TinyVec<[u32; TINY_INLINE]> {
+        fill_tinyvec::<N>(&mut self.buf);
+        core::mem::swap(&mut self.buf, &mut self.spare);
+        core::mem::take(&mut self.spare)
+    }
+    #[inline(never)]
+    fn recycle(&mut self, mut v: TinyVec<[u32; TINY_INLINE]>) {
+        v.clear();
+        self.spare = v;
+    }
+}
+
+// ------------------------------------------------------------
+// Box<[u32]> zero-alloc per iteration
+// Vec -> Box is naturally zero-alloc when len == cap (we prealloc).
+// SmallVec/TinyVec: force heap (even for small N) by using a preallocated Vec
+// buffer and constructing the tiny/small vector from that Vec each iter.
+// Boxing then reuses the same heap buffer; recycle converts Box back to Vec.
+// ------------------------------------------------------------
+
+struct VecRepoBox<const N: usize> {
+    buf: Vec<u32>,
+    spare: Vec<u32>,
+}
+impl<const N: usize> VecRepoBox<N> {
+    fn new() -> Self {
+        Self {
+            buf: Vec::with_capacity(N),
+            spare: Vec::with_capacity(N),
+        }
+    }
+    #[inline(never)]
+    fn fetch_box(&mut self) -> Box<[u32]> {
+        fill_vec::<N>(&mut self.buf);
+        core::mem::swap(&mut self.buf, &mut self.spare);
+        let out_vec = core::mem::take(&mut self.spare);
+        out_vec.into_boxed_slice() // zero-alloc boxing
+    }
+    #[inline(never)]
+    fn recycle_box(&mut self, bx: Box<[u32]>) {
+        let mut v = bx.into_vec(); // reuses buffer
+        v.clear();
+        self.spare = v;
+    }
+}
+
+struct SmallVecRepoBox<const N: usize> {
+    // We keep heap Vec buffers to *force* spilled mode for SmallVec even when N <= inline.
+    buf_v: Vec<u32>,
+    spare_v: Vec<u32>,
+}
+impl<const N: usize> SmallVecRepoBox<N> {
+    fn new() -> Self {
+        Self {
+            buf_v: Vec::with_capacity(N),
+            spare_v: Vec::with_capacity(N),
+        }
+    }
+    #[inline(never)]
+    fn fetch_box(&mut self) -> Box<[u32]> {
+        // Ensure we take a preallocated Vec for this iteration
+        core::mem::swap(&mut self.buf_v, &mut self.spare_v);
+        let v_in = core::mem::take(&mut self.buf_v);
+        // Construct SmallVec *spilled* from Vec (no alloc), fill via SmallVec's push path.
+        let mut sv: SmallVec<SmallInline> = SmallVec::from_vec(v_in);
+        fill_smallvec::<N>(&mut sv);
+        let v_out = sv.into_vec(); // no alloc
+        v_out.into_boxed_slice() // no alloc
+    }
+    #[inline(never)]
+    fn recycle_box(&mut self, bx: Box<[u32]>) {
+        let mut v = bx.into_vec();
+        v.clear();
+        self.buf_v = v; // will be swapped into place next fetch
+    }
+}
+
+struct TinyVecRepoBox<const N: usize> {
+    // Keep heap Vec buffers to force spilled mode for TinyVec even for small N.
+    buf_v: Vec<u32>,
+    spare_v: Vec<u32>,
+}
+impl<const N: usize> TinyVecRepoBox<N> {
+    fn new() -> Self {
+        Self {
+            buf_v: Vec::with_capacity(N),
+            spare_v: Vec::with_capacity(N),
+        }
+    }
+    #[inline(never)]
+    fn fetch_box(&mut self) -> Box<[u32]> {
+        core::mem::swap(&mut self.buf_v, &mut self.spare_v);
+        let v_in = core::mem::take(&mut self.buf_v);
+        // Force heap mode by wrapping the preallocated Vec directly.
+        let mut tv: TinyVec<[u32; TINY_INLINE]> = TinyVec::Heap(v_in);
+        fill_tinyvec::<N>(&mut tv);
+        let v_out = tv.into_vec(); // takes the Vec without reallocation
+        v_out.into_boxed_slice() // no alloc
+    }
+    #[inline(never)]
+    fn recycle_box(&mut self, bx: Box<[u32]>) {
+        let mut v = bx.into_vec();
+        v.clear();
+        self.buf_v = v;
+    }
+}
+
+// ------------------------------------------------------------
+// Benches
+// ------------------------------------------------------------
+
 fn bench_owned_moves_for<const N: usize>(c: &mut Criterion) {
-    let vec_uc = UseCase::new(VecRepo::<N>);
-    let small_uc = UseCase::new(SmallVecRepo::<N>);
-    let tiny_uc = UseCase::new(TinyVecRepo::<N>);
+    let mut vec_repo = VecRepoMove::<N>::new();
+    let mut small_repo = SmallVecRepoMove::<N>::new();
+    let mut tiny_repo = TinyVecRepoMove::<N>::new();
 
     let mut g = c.benchmark_group(format!("owned_move_N={}", N));
-    g.bench_function("Vec (move)", |b| {
-        b.iter(|| {
-            let v = vec_uc.run_vec();
-            black_box(v.last().copied())
-        })
+    g.throughput(Throughput::Elements(N as u64));
+
+    g.bench_function("Vec (move, noalloc)", |b| {
+        b.iter_batched(
+            || (),
+            |_| {
+                let mut v = vec_repo.fetch_move();
+                black_box(v.last().copied());
+                v.clear();
+                vec_repo.recycle(v);
+            },
+            BatchSize::SmallInput,
+        )
     });
-    g.bench_function("SmallVec (move)", |b| {
-        b.iter(|| {
-            let v = small_uc.run_smallvec();
-            black_box(v.last().copied())
-        })
+
+    g.bench_function("SmallVec (move, noalloc)", |b| {
+        b.iter_batched(
+            || (),
+            |_| {
+                let mut v = small_repo.fetch_move();
+                black_box(v.last().copied());
+                v.clear();
+                small_repo.recycle(v);
+            },
+            BatchSize::SmallInput,
+        )
     });
-    g.bench_function("TinyVec (move)", |b| {
-        b.iter(|| {
-            let v = tiny_uc.run_tinyvec();
-            black_box(v.last().copied())
-        })
+
+    g.bench_function("TinyVec (move, noalloc)", |b| {
+        b.iter_batched(
+            || (),
+            |_| {
+                let mut v = tiny_repo.fetch_move();
+                black_box(v.last().copied());
+                v.clear();
+                tiny_repo.recycle(v);
+            },
+            BatchSize::SmallInput,
+        )
     });
+
     g.finish();
 }
 
 fn bench_box_moves_for<const N: usize>(c: &mut Criterion) {
-    let vec_uc = UseCaseBox::new(VecRepoBox::<N>);
-    let small_uc = UseCaseBox::new(SmallVecRepoBox::<N>);
-    let tiny_uc = UseCaseBox::new(TinyVecRepoBox::<N>);
+    let mut vec_repo = VecRepoBox::<N>::new();
+    let mut small_repo = SmallVecRepoBox::<N>::new();
+    let mut tiny_repo = TinyVecRepoBox::<N>::new();
 
     let mut g = c.benchmark_group(format!("box_move_N={}", N));
-    g.bench_function("Vec -> Box<[u32]>", |b| {
-        b.iter(|| {
-            let bx = vec_uc.run_box();
-            black_box(bx.len())
-        })
+    g.throughput(Throughput::Elements(N as u64));
+
+    g.bench_function("Vec -> Box<[u32]> (noalloc)", |b| {
+        b.iter_batched(
+            || (),
+            |_| {
+                let bx = vec_repo.fetch_box();
+                black_box(bx.len());
+                vec_repo.recycle_box(bx);
+            },
+            BatchSize::SmallInput,
+        )
     });
-    g.bench_function("SmallVec -> Box<[u32]>", |b| {
-        b.iter(|| {
-            let bx = small_uc.run_box();
-            black_box(bx.len())
-        })
+
+    // Note: For SmallVec/TinyVec we force spilled mode via Vec buffers to make boxing zero-alloc.
+    g.bench_function("SmallVec -> Box<[u32]> (noalloc, forced-heap)", |b| {
+        b.iter_batched(
+            || (),
+            |_| {
+                let bx = small_repo.fetch_box();
+                black_box(bx.len());
+                small_repo.recycle_box(bx);
+            },
+            BatchSize::SmallInput,
+        )
     });
-    g.bench_function("TinyVec -> Box<[u32]>", |b| {
-        b.iter(|| {
-            let bx = tiny_uc.run_box();
-            black_box(bx.len())
-        })
+
+    g.bench_function("TinyVec -> Box<[u32]> (noalloc, forced-heap)", |b| {
+        b.iter_batched(
+            || (),
+            |_| {
+                let bx = tiny_repo.fetch_box();
+                black_box(bx.len());
+                tiny_repo.recycle_box(bx);
+            },
+            BatchSize::SmallInput,
+        )
     });
+
     g.finish();
 }
 
-// ---------- Criterion entry ----------
 fn benches(c: &mut Criterion) {
-    for &n in &[10, 100, 1_000, 10_000, 1_000_000] {
-        match n {
-            10 => {
-                bench_owned_moves_for::<10>(c);
-                bench_box_moves_for::<10>(c);
-            }
-            100 => {
-                bench_owned_moves_for::<100>(c);
-                bench_box_moves_for::<100>(c);
-            }
-            1_000 => {
-                bench_owned_moves_for::<1_000>(c);
-                bench_box_moves_for::<1_000>(c);
-            }
-            10_000 => {
-                bench_owned_moves_for::<10_000>(c);
-                bench_box_moves_for::<10_000>(c);
-            }
-            1_000_000 => {
-                bench_owned_moves_for::<1_000_000>(c);
-                bench_box_moves_for::<1_000_000>(c);
-            }
-            _ => unreachable!(),
-        }
-    }
+    bench_owned_moves_for::<10>(c);
+    bench_box_moves_for::<10>(c);
+
+    bench_owned_moves_for::<100>(c);
+    bench_box_moves_for::<100>(c);
+
+    bench_owned_moves_for::<1_000>(c);
+    bench_box_moves_for::<1_000>(c);
+
+    bench_owned_moves_for::<10_000>(c);
+    bench_box_moves_for::<10_000>(c);
+
+    bench_owned_moves_for::<1_000_000>(c);
+    bench_box_moves_for::<1_000_000>(c);
 }
 
 criterion_group!(benches_group, benches);
