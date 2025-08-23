@@ -65,6 +65,7 @@ fn bench_make_and_fill_for<const N: usize>(c: &mut Criterion) {
 
 fn benches(c: &mut Criterion) {
     bench_make_and_fill_for::<10>(c);
+    bench_make_and_fill_for::<15>(c);
     bench_make_and_fill_for::<100>(c);
     bench_make_and_fill_for::<1_000>(c);
     bench_make_and_fill_for::<10_000>(c);
