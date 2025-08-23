@@ -8,8 +8,10 @@ rand = "0.9.1"
 
 [dev-dependencies]
 criterion = "0.5.1"
+smallvec = "*"
+tinyvec = { version = "*", features = ["alloc"] }
 
 [[bench]]
-name = "vector_map"
+name = "vectors"
 harness = false
 
