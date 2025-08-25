@@ -49,60 +49,6 @@ fn bench_dispatch_overhead(c: &mut Criterion) {
     });
 }
 
-// ==== New extended benchmarks ====
-
-trait Worker {
-    fn work(&self) -> u64;
-}
-
-struct Concrete;
-
-impl Worker for Concrete {
-    fn work(&self) -> u64 {
-        42
-    }
-}
-
-fn concrete_call(worker: &Concrete, n: u64) -> u64 {
-    let mut sum = 0;
-    for _ in 0..n {
-        sum += worker.work();
-    }
-    sum
-}
-
-fn trait_object_call(worker: &dyn Worker, n: u64) -> u64 {
-    let mut sum = 0;
-    for _ in 0..n {
-        sum += worker.work();
-    }
-    sum
-}
-
-fn boxed_trait_object_call(worker: Box<dyn Worker>, n: u64) -> u64 {
-    let mut sum = 0;
-    for _ in 0..n {
-        sum += worker.work();
-    }
-    sum
-}
-
-fn function_pointer_call(f: fn() -> u64, n: u64) -> u64 {
-    let mut sum = 0;
-    for _ in 0..n {
-        sum += f();
-    }
-    sum
-}
-
-fn generic_call<T: Worker>(worker: &T, n: u64) -> u64 {
-    let mut sum = 0;
-    for _ in 0..n {
-        sum += worker.work();
-    }
-    sum
-}
-
 // ==== Error benchmarks ====
 
 #[derive(Debug)]
@@ -196,36 +142,5 @@ fn bench_error_dispatch(c: &mut Criterion) {
 
 // ==== Benchmark groups ====
 
-criterion_group!(
-    benches,
-    bench_dispatch_overhead,
-    bench_more_dispatch_types,
-    bench_error_dispatch
-);
+criterion_group!(benches, bench_dispatch_overhead, bench_error_dispatch);
 criterion_main!(benches);
-
-fn bench_more_dispatch_types(c: &mut Criterion) {
-    let worker = Concrete;
-
-    let n = 1_000_000;
-
-    c.bench_function("new_concrete_call", |b| {
-        b.iter(|| black_box(concrete_call(&worker, n)))
-    });
-
-    c.bench_function("new_trait_object_call", |b| {
-        b.iter(|| black_box(trait_object_call(&worker, n)))
-    });
-
-    c.bench_function("new_boxed_trait_object_call", |b| {
-        b.iter(|| black_box(boxed_trait_object_call(Box::new(Concrete), n)))
-    });
-
-    c.bench_function("new_function_pointer_call", |b| {
-        b.iter(|| black_box(function_pointer_call(|| 42, n)))
-    });
-
-    c.bench_function("new_generic_call", |b| {
-        b.iter(|| black_box(generic_call(&worker, n)))
-    });
-}
