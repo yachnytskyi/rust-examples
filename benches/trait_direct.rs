@@ -24,6 +24,11 @@ fn use_case_trait(repo: &dyn UserRepo, id: u64) -> u64 {
     repo.get_user(id)
 }
 
+// NEW: generic (monomorphized) static-dispatch use case
+fn use_case_generic<R: UserRepo>(repo: &R, id: u64) -> u64 {
+    repo.get_user(id)
+}
+
 fn bench_dispatch_overhead(c: &mut Criterion) {
     let repo = ConcreteRepo;
     let repo_trait: &dyn UserRepo = &repo;
@@ -43,6 +48,17 @@ fn bench_dispatch_overhead(c: &mut Criterion) {
             let mut sum = 0;
             for i in 0..1_000_000 {
                 sum += black_box(use_case_trait(repo_trait, i));
+            }
+            black_box(sum)
+        })
+    });
+
+    // NEW: generic static-dispatch benchmark
+    c.bench_function("generic_monomorphized_call", |b| {
+        b.iter(|| {
+            let mut sum = 0;
+            for i in 0..1_000_000 {
+                sum += black_box(use_case_generic(&repo, i));
             }
             black_box(sum)
         })
