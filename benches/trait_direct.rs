@@ -11,18 +11,15 @@ trait UserRepo {
 struct ConcreteRepo;
 
 impl UserRepo for ConcreteRepo {
-    #[inline(never)]
     fn get_user(&self, _id: u64) -> u64 {
         42
     }
 }
 
-#[inline(never)]
 fn use_case_concrete(repo: &ConcreteRepo, id: u64) -> u64 {
     repo.get_user(id)
 }
 
-#[inline(never)]
 fn use_case_trait(repo: &dyn UserRepo, id: u64) -> u64 {
     repo.get_user(id)
 }
@@ -61,13 +58,11 @@ trait Worker {
 struct Concrete;
 
 impl Worker for Concrete {
-    #[inline(never)]
     fn work(&self) -> u64 {
         42
     }
 }
 
-#[inline(never)]
 fn concrete_call(worker: &Concrete, n: u64) -> u64 {
     let mut sum = 0;
     for _ in 0..n {
@@ -76,7 +71,6 @@ fn concrete_call(worker: &Concrete, n: u64) -> u64 {
     sum
 }
 
-#[inline(never)]
 fn trait_object_call(worker: &dyn Worker, n: u64) -> u64 {
     let mut sum = 0;
     for _ in 0..n {
@@ -85,7 +79,6 @@ fn trait_object_call(worker: &dyn Worker, n: u64) -> u64 {
     sum
 }
 
-#[inline(never)]
 fn boxed_trait_object_call(worker: Box<dyn Worker>, n: u64) -> u64 {
     let mut sum = 0;
     for _ in 0..n {
@@ -94,7 +87,6 @@ fn boxed_trait_object_call(worker: Box<dyn Worker>, n: u64) -> u64 {
     sum
 }
 
-#[inline(never)]
 fn function_pointer_call(f: fn() -> u64, n: u64) -> u64 {
     let mut sum = 0;
     for _ in 0..n {
@@ -103,7 +95,6 @@ fn function_pointer_call(f: fn() -> u64, n: u64) -> u64 {
     sum
 }
 
-#[inline(never)]
 fn generic_call<T: Worker>(worker: &T, n: u64) -> u64 {
     let mut sum = 0;
     for _ in 0..n {
@@ -125,12 +116,10 @@ impl fmt::Display for MyError {
 
 impl Error for MyError {}
 
-#[inline(never)]
 fn concrete_error_fn(success: bool) -> Result<u64, MyError> {
     if success { Ok(42) } else { Err(MyError) }
 }
 
-#[inline(never)]
 fn dynamic_error_fn(success: bool) -> Result<u64, Box<dyn Error>> {
     if success {
         Ok(42)
@@ -154,7 +143,6 @@ impl fmt::Display for MyEnumError {
 
 impl Error for MyEnumError {}
 
-#[inline(never)]
 fn enum_error_fn(success: bool) -> Result<u64, MyEnumError> {
     if success {
         Ok(42)

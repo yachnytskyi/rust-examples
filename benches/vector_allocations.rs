@@ -1,6 +1,5 @@
 use criterion::{Criterion, Throughput, black_box, criterion_group, criterion_main};
 
-#[inline(never)]
 fn make_and_fill_prealloc<const N: usize>() {
     // Allocate with exact capacity so pushes won't reallocate.
     let mut v: Vec<u32> = Vec::with_capacity(N);
@@ -12,7 +11,6 @@ fn make_and_fill_prealloc<const N: usize>() {
     // drop at end
 }
 
-#[inline(never)]
 fn make_and_fill_growing<const N: usize>() {
     // Start with empty Vec so geometric growth + realloc/memcpy cost is measured.
     let mut v: Vec<u32> = Vec::new();

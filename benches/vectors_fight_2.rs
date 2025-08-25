@@ -7,14 +7,12 @@ const REPS: usize = 100_000; // how many tiny vectors we create & drop per itera
 const K: usize = 8; // inline size / typical tiny size (keep <= K to avoid heap)
 
 // ---------- helpers ----------
-#[inline(never)]
 fn do_work_on(v: &[u32]) -> u64 {
     // Minimal use to prevent optimization-away.
     v.iter().fold(0u64, |acc, &x| acc.wrapping_add(x as u64))
 }
 
 // Fixed-size (always exactly K)
-#[inline(never)]
 fn many_tiny_vec_fixed_k() -> u64 {
     let mut acc = 0u64;
     for _ in 0..REPS {
@@ -28,7 +26,6 @@ fn many_tiny_vec_fixed_k() -> u64 {
     acc
 }
 
-#[inline(never)]
 fn many_tiny_vec_fixed_k_reserve() -> u64 {
     let mut acc = 0u64;
     for _ in 0..REPS {
@@ -42,7 +39,6 @@ fn many_tiny_vec_fixed_k_reserve() -> u64 {
     acc
 }
 
-#[inline(never)]
 fn many_tiny_smallvec_fixed_k() -> u64 {
     let mut acc = 0u64;
     for _ in 0..REPS {
@@ -56,7 +52,6 @@ fn many_tiny_smallvec_fixed_k() -> u64 {
     acc
 }
 
-#[inline(never)]
 fn many_tiny_tinyvec_fixed_k() -> u64 {
     let mut acc = 0u64;
     for _ in 0..REPS {
@@ -77,7 +72,6 @@ fn lcg_step(x: &mut u64) -> usize {
     ((*x >> 32) as usize) % (K + 1)
 }
 
-#[inline(never)]
 fn many_tiny_vec_varied() -> u64 {
     let mut acc = 0u64;
     let mut rnd = 0xDEADBEEFCAFEBABEu64;
@@ -92,7 +86,6 @@ fn many_tiny_vec_varied() -> u64 {
     acc
 }
 
-#[inline(never)]
 fn many_tiny_vec_varied_reserve() -> u64 {
     let mut acc = 0u64;
     let mut rnd = 0xFACEFEED12345678u64;
@@ -107,7 +100,6 @@ fn many_tiny_vec_varied_reserve() -> u64 {
     acc
 }
 
-#[inline(never)]
 fn many_tiny_smallvec_varied() -> u64 {
     let mut acc = 0u64;
     let mut rnd = 0xA5A5A5A5A5A5A5A5u64;
@@ -122,7 +114,6 @@ fn many_tiny_smallvec_varied() -> u64 {
     acc
 }
 
-#[inline(never)]
 fn many_tiny_tinyvec_varied() -> u64 {
     let mut acc = 0u64;
     let mut rnd = 0x0123456789ABCDEFu64;

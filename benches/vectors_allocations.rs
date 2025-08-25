@@ -10,7 +10,6 @@ const TINY_INLINE: usize = 100;
 // Constructors + fill helpers
 // -----------------------------
 
-#[inline(never)]
 fn make_and_fill_vec_prealloc<const N: usize>() {
     let mut v: Vec<u32> = Vec::with_capacity(N); // preallocate exactly N
     for i in 0..N as u32 {
@@ -20,7 +19,6 @@ fn make_and_fill_vec_prealloc<const N: usize>() {
     black_box(v.len());
 }
 
-#[inline(never)]
 fn make_and_fill_vec_grow<const N: usize>() {
     let mut v: Vec<u32> = Vec::new(); // grow geometrically
     for i in 0..N as u32 {
@@ -30,7 +28,6 @@ fn make_and_fill_vec_grow<const N: usize>() {
     black_box(v.len());
 }
 
-#[inline(never)]
 fn make_and_fill_smallvec_prealloc<const N: usize>() {
     // If N <= inline cap, this stays inline; if N > inline cap, spills with exact heap cap.
     let mut v: SmallVec<SmallInline> = SmallVec::with_capacity(N);
@@ -41,7 +38,6 @@ fn make_and_fill_smallvec_prealloc<const N: usize>() {
     black_box(v.len());
 }
 
-#[inline(never)]
 fn make_and_fill_smallvec_grow<const N: usize>() {
     // Starts inline; will spill + grow if N > inline cap.
     let mut v: SmallVec<SmallInline> = SmallVec::new();
@@ -52,7 +48,6 @@ fn make_and_fill_smallvec_grow<const N: usize>() {
     black_box(v.len());
 }
 
-#[inline(never)]
 fn make_and_fill_tinyvec_prealloc<const N: usize>() {
     // If N <= TINY_INLINE, remains inline; else allocates exact heap cap N.
     let mut v: TinyVec<[u32; TINY_INLINE]> = TinyVec::with_capacity(N);
@@ -63,7 +58,6 @@ fn make_and_fill_tinyvec_prealloc<const N: usize>() {
     black_box(v.len());
 }
 
-#[inline(never)]
 fn make_and_fill_tinyvec_grow<const N: usize>() {
     // Starts inline; spills + grows when N > TINY_INLINE.
     let mut v: TinyVec<[u32; TINY_INLINE]> = TinyVec::new();

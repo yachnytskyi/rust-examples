@@ -2,7 +2,6 @@ use criterion::{Criterion, black_box, criterion_group, criterion_main};
 
 // ==== Basic Loop ====
 
-#[inline(never)]
 fn basic_for_loop(n: u64) -> u64 {
     let mut sum = 0;
     for i in 0..n {
@@ -13,7 +12,6 @@ fn basic_for_loop(n: u64) -> u64 {
 
 // ==== Map ====
 
-#[inline(never)]
 fn map_without_sugar(n: u64) -> u64 {
     let mut sum = 0;
     for i in 0..n {
@@ -23,14 +21,12 @@ fn map_without_sugar(n: u64) -> u64 {
     sum
 }
 
-#[inline(never)]
 fn map_for_loop(n: u64) -> u64 {
     (0..n).map(|x| x).sum()
 }
 
 // ==== Fold ====
 
-#[inline(never)]
 fn fold_without_sugar(n: u64) -> u64 {
     let mut acc = 0;
     for i in 0..n {
@@ -39,14 +35,12 @@ fn fold_without_sugar(n: u64) -> u64 {
     acc
 }
 
-#[inline(never)]
 fn fold_for_loop(n: u64) -> u64 {
     (0..n).fold(0, |acc, x| acc + x)
 }
 
 // ==== Iterator Map Collect ====
 
-#[inline(never)]
 fn iterator_map_collect_without_sugar(n: u64) -> u64 {
     let mut sum = 0;
     let mut vec = Vec::with_capacity(n as usize);
@@ -59,14 +53,12 @@ fn iterator_map_collect_without_sugar(n: u64) -> u64 {
     sum
 }
 
-#[inline(never)]
 fn iterator_map_collect(n: u64) -> u64 {
     (0..n).map(|x| x).collect::<Vec<u64>>().iter().sum()
 }
 
 // ==== For Each ====
 
-#[inline(never)]
 fn for_each_without_sugar(n: u64) -> u64 {
     let mut sum = 0;
     for i in 0..n {
@@ -75,7 +67,6 @@ fn for_each_without_sugar(n: u64) -> u64 {
     sum
 }
 
-#[inline(never)]
 fn for_each_for_loop(n: u64) -> u64 {
     let mut sum = 0;
     (0..n).for_each(|x| sum += x);
@@ -84,7 +75,6 @@ fn for_each_for_loop(n: u64) -> u64 {
 
 // ==== Filter ====
 
-#[inline(never)]
 fn filter_without_sugar(n: u64) -> u64 {
     let mut sum = 0;
     for i in 0..n {
@@ -95,14 +85,12 @@ fn filter_without_sugar(n: u64) -> u64 {
     sum
 }
 
-#[inline(never)]
 fn filter_for_loop(n: u64) -> u64 {
     (0..n).filter(|&x| x % 2 == 0).sum()
 }
 
 // ==== Zip ====
 
-#[inline(never)]
 fn zip_without_sugar(n: u64) -> u64 {
     let v: Vec<u64> = (0..n).collect();
     let mut sum = 0;
@@ -116,7 +104,6 @@ fn zip_without_sugar(n: u64) -> u64 {
     sum
 }
 
-#[inline(never)]
 fn zip_for_loop(n: u64) -> u64 {
     let v: Vec<u64> = (0..n).collect();
     (0..n).zip(v.iter()).map(|(a, b)| a + *b).sum()
@@ -124,7 +111,6 @@ fn zip_for_loop(n: u64) -> u64 {
 
 // ==== Skip ====
 
-#[inline(never)]
 fn skip_without_sugar(n: u64) -> u64 {
     let mut sum = 0;
     let mut i = 0;
@@ -137,14 +123,12 @@ fn skip_without_sugar(n: u64) -> u64 {
     sum
 }
 
-#[inline(never)]
 fn skip_for_loop(n: u64) -> u64 {
     (0..n).skip(10).sum()
 }
 
 // ==== Take ====
 
-#[inline(never)]
 fn take_without_sugar(n: u64) -> u64 {
     let mut sum = 0;
     let mut count = 0;
@@ -157,14 +141,12 @@ fn take_without_sugar(n: u64) -> u64 {
     sum
 }
 
-#[inline(never)]
 fn take_for_loop(n: u64) -> u64 {
     (0..n).take(1000).sum()
 }
 
 // ==== Flat Map ====
 
-#[inline(never)]
 fn flat_map_without_sugar(n: u64) -> u64 {
     let mut sum = 0;
     for i in 0..n {
@@ -174,14 +156,12 @@ fn flat_map_without_sugar(n: u64) -> u64 {
     sum
 }
 
-#[inline(never)]
 fn flat_map_for_loop(n: u64) -> u64 {
     (0..n).flat_map(|x| [x, x + 1].into_iter()).sum()
 }
 
 // ==== Any ====
 
-#[inline(never)]
 fn any_without_sugar(n: u64) -> bool {
     let mut i = 0;
     while i < n {
@@ -193,14 +173,12 @@ fn any_without_sugar(n: u64) -> bool {
     false
 }
 
-#[inline(never)]
 fn any_for_loop(n: u64) -> bool {
     (0..n).any(|x| x == 100)
 }
 
 // ==== All ====
 
-#[inline(never)]
 fn all_without_sugar(n: u64) -> bool {
     let mut i = 0;
     while i < n {
@@ -212,7 +190,6 @@ fn all_without_sugar(n: u64) -> bool {
     true
 }
 
-#[inline(never)]
 fn all_for_loop(n: u64) -> bool {
     (0..n).all(|x| x < n)
 }

@@ -9,7 +9,6 @@ use tinyvec::TinyVec;
 type SmallInline = [u32; 128];
 const TINY_INLINE: usize = 100;
 
-#[inline(never)]
 fn fill_vec<const N: usize>(v: &mut Vec<u32>) {
     v.clear();
     if v.capacity() < N {
@@ -20,7 +19,6 @@ fn fill_vec<const N: usize>(v: &mut Vec<u32>) {
     }
 }
 
-#[inline(never)]
 fn fill_smallvec<const N: usize>(v: &mut SmallVec<SmallInline>) {
     v.clear();
     for i in 0..N as u32 {
@@ -28,7 +26,6 @@ fn fill_smallvec<const N: usize>(v: &mut SmallVec<SmallInline>) {
     }
 }
 
-#[inline(never)]
 fn fill_tinyvec<const N: usize>(v: &mut TinyVec<[u32; TINY_INLINE]>) {
     v.clear();
     for i in 0..N as u32 {
@@ -40,14 +37,12 @@ fn fill_tinyvec<const N: usize>(v: &mut TinyVec<[u32; TINY_INLINE]>) {
 // Functions under test (Vec)
 // ------------------------------------------------------------
 
-#[inline(never)]
 fn make_vec_value<const N: usize>() -> Vec<u32> {
     let mut v = Vec::with_capacity(N);
     fill_vec::<N>(&mut v);
     v
 }
 
-#[inline(never)]
 fn make_vec_box<const N: usize>() -> Box<[u32]> {
     let mut v = Vec::with_capacity(N);
     fill_vec::<N>(&mut v);
@@ -58,7 +53,6 @@ fn make_vec_box<const N: usize>() -> Box<[u32]> {
 // Functions under test (SmallVec)
 // ------------------------------------------------------------
 
-#[inline(never)]
 fn make_smallvec_value<const N: usize>() -> SmallVec<SmallInline> {
     let inline = <SmallInline as Array>::size();
     let mut sv: SmallVec<SmallInline> = if N > inline {
@@ -70,7 +64,6 @@ fn make_smallvec_value<const N: usize>() -> SmallVec<SmallInline> {
     sv
 }
 
-#[inline(never)]
 fn make_smallvec_box<const N: usize>() -> Box<[u32]> {
     // Build SmallVec, then convert to Vec → Box.
     // If inline, this will allocate & copy; if spilled, it reuses the buffer.
@@ -82,7 +75,6 @@ fn make_smallvec_box<const N: usize>() -> Box<[u32]> {
 // Functions under test (TinyVec)
 // ------------------------------------------------------------
 
-#[inline(never)]
 fn make_tinyvec_value<const N: usize>() -> TinyVec<[u32; TINY_INLINE]> {
     let mut tv: TinyVec<[u32; TINY_INLINE]> = if N > TINY_INLINE {
         TinyVec::with_capacity(N) // heap
@@ -93,7 +85,6 @@ fn make_tinyvec_value<const N: usize>() -> TinyVec<[u32; TINY_INLINE]> {
     tv
 }
 
-#[inline(never)]
 fn make_tinyvec_box<const N: usize>() -> Box<[u32]> {
     // Build TinyVec, then convert to Vec → Box.
     // Inline → alloc+copy; spilled → reuse.
@@ -183,7 +174,7 @@ fn bench_return_forms_for<const N: usize>(c: &mut Criterion) {
 
 fn benches(c: &mut Criterion) {
     bench_return_forms_for::<10>(c);
-        bench_return_forms_for::<30>(c);
+    bench_return_forms_for::<30>(c);
     bench_return_forms_for::<100>(c);
     bench_return_forms_for::<1_000>(c);
     bench_return_forms_for::<10_000>(c);

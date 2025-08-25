@@ -10,7 +10,6 @@ const TINY_INLINE: usize = 100;
 // Make & fill (alloc + push are timed)
 // -----------------------------
 
-#[inline(never)]
 fn make_and_fill_vec_prealloc<const N: usize>() {
     let mut v: Vec<u32> = Vec::with_capacity(N);
     for i in 0..N as u32 {
@@ -20,7 +19,6 @@ fn make_and_fill_vec_prealloc<const N: usize>() {
     black_box(v.len());
 }
 
-#[inline(never)]
 fn make_and_fill_smallvec_prealloc<const N: usize>() {
     // Inline if N <= 128; else heap with requested capacity
     let mut v: SmallVec<SmallInline> = SmallVec::with_capacity(N);
@@ -31,7 +29,6 @@ fn make_and_fill_smallvec_prealloc<const N: usize>() {
     black_box(v.len());
 }
 
-#[inline(never)]
 fn make_and_fill_tinyvec_prealloc<const N: usize>() {
     // Inline if N <= 100; else heap with requested capacity
     let mut v: TinyVec<[u32; TINY_INLINE]> = TinyVec::with_capacity(N);

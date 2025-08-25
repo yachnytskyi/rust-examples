@@ -10,7 +10,6 @@ const SMALLMAP_INLINE: usize = 128;
 // Make & fill (alloc + insert are timed)
 // -----------------------------
 
-#[inline(never)]
 fn make_and_fill_hashmap_prealloc<const N: usize>() {
     // Pre-allocate to avoid rehash growth noise.
     let mut m: HashMap<u32, u32> = HashMap::with_capacity(N);
@@ -21,7 +20,6 @@ fn make_and_fill_hashmap_prealloc<const N: usize>() {
     black_box(m.get(&0));
 }
 
-#[inline(never)]
 fn make_and_fill_smallmap_inline_then_spill<const N: usize>() {
     // Inline up to SMALLMAP_INLINE; spills to a heap-backed map beyond that.
     let mut m: SmallMap<SMALLMAP_INLINE, u32, u32> = SmallMap::new();
@@ -32,7 +30,6 @@ fn make_and_fill_smallmap_inline_then_spill<const N: usize>() {
     black_box(m.get(&0));
 }
 
-#[inline(never)]
 fn make_and_fill_arraymap_stack<const N: usize>() {
     // Fixed capacity on the stack, exactly N; ensure your "small Ns" never exceed what you want on the stack.
     let mut m: ArrayMap<u32, u32, N> = ArrayMap::new();

@@ -10,8 +10,10 @@ rand = "0.9.1"
 criterion = "0.5.1"
 smallvec = "*"
 tinyvec = { version = "*", features = ["alloc"] }
+small-map = "*"
+tinymap = "*" 
 
 [[bench]]
-name = "vectors"
+name = "array"
 harness = false
 
