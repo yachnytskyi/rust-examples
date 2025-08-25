@@ -66,7 +66,6 @@ fn many_tiny_tinyvec_fixed_k() -> u64 {
 }
 
 // Varied-size (0..=K) via tiny LCG — closer to “sometimes small”
-#[inline(always)]
 fn lcg_step(x: &mut u64) -> usize {
     *x = x.wrapping_mul(6364136223846793005).wrapping_add(1);
     ((*x >> 32) as usize) % (K + 1)
